@@ -32,7 +32,7 @@
     var, watching, when, with},
 }
 \lstset{
-  basicstyle=\small\ttfamily,
+  basicstyle=\footnotesize\ttfamily,
   captionpos=b,
   columns=flexible,
   commentstyle=\rmfamily\itshape,
@@ -79,6 +79,36 @@
     - determinism, termination, cite LCTES, to appear
 - acknowledgment
 - authors
+
+- garantias
+- na intro, falar pq apply to most games, quais são e como e óbivo que se aplicam
+
+- similar metrics in previous work
+    - state machines
+
+- inverter related work?
+
+- qual o custo de CPU p/ o pingus?
+    - falar do sensys
+    - comentar sobre AAA, talvez para partes do jogo?
+
+- brief intro about SSRP, Ceu
+
+- drawbacks de SSRP?
+
+- on_click / updated
+    - different methods
+
+
+Ex.: Fig.3.b): how is but.on_click updated? How does the "emit game.armagedon" arrives to pingus?
+Using events? (please see below).
+Fig.7.b): how is variable game.update modified?
+
+Communication in Ceu requires more detail. Pg. 10 states that events are broadcasted. Broadcast is the core
+of the observer pattern and it should be simple to achieve the same effect in OOP. Nevertheless, broadcast communication
+can be ineffective and make applications very difficult to understand/debug. The limitations of broadcast should
+be discussed in detail. If events are broadcasted, are filters supported?
+
 \end{comment}
 
 \begin{comment}
@@ -215,13 +245,13 @@ programming language that originally targets embedded soft real-time systems.
 It aims to offer a concurrent, safe, and expressive alternative to C with the
 characteristics that follow:
 %
-\begin{description}
-\item [Reactive:] code only executes in reactions to events.
-\item [Structured:] programs use structured control mechanisms, such as
+\begin{itemize}
+\item \textbf{Reactive:} code only executes in reactions to events.
+\item \textbf{Structured:} programs use structured control mechanisms, such as
     \code{spawn} and \code{await} (to create and suspend activities).
-\item [Synchronous:] reactions run atomically and to completion on each line of
+\item \textbf{Synchronous:} reactions run atomically and to completion on each line of
     execution, i.e., there's no implicit preemption or real parallelism.
-\end{description}
+\end{itemize}
 %
 Structured reactive programming lets developers write code in direct style,
 recovering from the inversion of control imposed by event-driven
@@ -292,7 +322,7 @@ Section~\ref{sec.conclusion} concludes the paper.
 % sloccount .           -> 18173
 
 \begin{figure*}
-%{\footnotesize
+{\footnotesize
 \begin{verbatim}
           Path             Ceu     C++   Ceu/C++    Description
           ------------    ----    ----    ----      --------------------------------------
@@ -310,7 +340,7 @@ Section~\ref{sec.conclusion} concludes the paper.
                           ----    ----    ----
                           3697    4135    0.89
 \end{verbatim}
-%}
+}
 \caption{The Pingus codebase directory tree.
 \label{tab.tree}
 }
@@ -434,8 +464,8 @@ In Pingus, a double click in the \emph{Armageddon button} at the bottom right
 of the screen literally explodes all pingus.%
 \footnote{Double click animation: \url{github.com/an000/p/#1} }
 
-\begin{figure*}
-\begin{minipage}[h]{0.50\linewidth}
+\begin{figure}[t]
+%\begin{minipage}[h]{0.50\linewidth}
 \begin{lstlisting}[numbers=right]
 ArmageddonButton::ArmageddonButton(<...>):
     RectComponent(<...>),
@@ -472,11 +502,13 @@ void ArmageddonButton::on_click (<...>) {
     }
 }
 \end{lstlisting}
-\centering\small{\ax Implementation in C++}
-\end{minipage}%
+%\centering\small{\ax Implementation in C++}
+%\end{minipage}%
 %
-\begin{minipage}[h]{0.50\linewidth}
+%\begin{minipage}[h]{0.50\linewidth}
 %\begin{lstlisting}
+\end{figure}
+\begin{figure}[t]
 \begin{lstlisting}[xleftmargin=2em]
 do
     var RectComponent but = <...>;
@@ -491,35 +523,14 @@ do
     <...>
     emit game.armageddon;
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.
 \end{lstlisting}
-\centering\small{\bx Implementation in \CEU}
-\end{minipage}%
+%\centering\small{\bx Implementation in \CEU}
+%\end{minipage}%
 %\rule{8.4cm}{0.37pt}
 \caption{ Detecting double-clicks in the \emph{Armageddon button}.
 \label{lst.armageddon}
 }
-\end{figure*}
+\end{figure}
 
 \begin{figure}
 \centering
@@ -596,6 +607,7 @@ entry point at the top level of the class, in which only instance members
 remain active between invocations.
 In particular, locals and loops cannot persist across invocations.
 
+\begin{comment}
 \subsubsection{Case Study: The \emph{Bomber Action} Animation Sequence}
 \label{sec.pats.fsms.2}
 
@@ -645,9 +657,9 @@ follows%
 %}
 %\end{figure}
 
-\begin{figure*}
-\begin{minipage}[t]{0.50\linewidth}
-\begin{lstlisting}[numbers=right]
+\begin{figure}[t]
+%\begin{minipage}[t]{0.50\linewidth}
+%\begin{lstlisting}[numbers=right]
 Bomber::Bomber (Pingu* p) :
     <...>
     spr(<...>),         // bomber sprite
@@ -696,12 +708,14 @@ void Bomber::draw (SceneContext& gc) {
     }
     gc.color().draw(spr, pingu->get_pos());
 }
-\end{lstlisting}
-\centering\small{\ax Implementation in C++}
-\end{minipage}
+%\end{lstlisting}
+%\centering\small{\ax Implementation in C++}
+%\end{minipage}
+\end{figure}
 %
-\begin{minipage}[t]{0.50\linewidth}
-\begin{lstlisting}[xleftmargin=2em]
+\begin{figure}[t]
+%\begin{minipage}[t]{0.50\linewidth}
+%\begin{lstlisting}[xleftmargin=2em]
 code/await Bomber (void) -> ActionName
 do
     <...>
@@ -733,31 +747,14 @@ do
     // 5. kills the pingu
     escape DEAD;
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.
 \end{lstlisting}
-\centering\small{\bx Implementation in \CEU}
-\end{minipage}
+%\centering\small{\bx Implementation in \CEU}
+%\end{minipage}
 %\rule{8.4cm}{0.37pt}
 \caption{ The \emph{Bomber action} sequence.
 \label{lst.bomber}
 }
-\end{figure*}
+\end{figure}
 
 In C++, the class \code{Bomber} in Figure~\ref{lst.bomber}.a defines the
 callbacks \code{draw} and \code{update} to manage the state machine of
@@ -821,6 +818,7 @@ it from the screen).
 %
 In contrast with the implementation in C++, all effects occur in a contiguous
 chunk of code (ln 7--30), which handles no extra functionality.
+\end{comment}
 
 \subsubsection{Summary \& Pattern Uses in Pingus}
 
@@ -888,8 +886,8 @@ Figure~\ref{lst.bomber}).
 
 \subsubsection{ Transition from \emph{Story}  to \emph{Credits} Screen}
 
-\begin{figure*}
-\begin{minipage}[t]{0.50\linewidth}
+\begin{figure}[t]
+%\begin{minipage}[t]{0.50\linewidth}
 \begin{lstlisting}[numbers=right]
 StoryDot::StoryDot(FileReader& reader) :
     show_credits(false), // do not show by default
@@ -904,7 +902,7 @@ void StoryDot::on_click() {
     <...>
 }
 
-///
+/// class separator ///
 
 StoryScreenComp::StoryScreenComp (<...>) :
     show_credits(show_credits),
@@ -931,11 +929,13 @@ void StoryScreenComp::next_text() {
       }
     }
 }
-\end{lstlisting}
-\centering\small{\ax Implementation in C++}
-\end{minipage}
+%\end{lstlisting}
+%\centering\small{\ax Implementation in C++}
+%\end{minipage}
+\end{figure}
 %
-\begin{minipage}[t]{0.50\linewidth}
+\begin{figure}[t]
+%\begin{minipage}[t]{0.50\linewidth}
 \begin{lstlisting}[xleftmargin=2em]
 loop do
     var int ret = await Worldmap();
@@ -950,41 +950,14 @@ loop do
       <...>
     end
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.
 \end{lstlisting}
-\centering\small{\bx Implementation in \CEU}
-\end{minipage}
+%\centering\small{\bx Implementation in \CEU}
+%\end{minipage}
 %\rule{8.4cm}{0.37pt}
 \caption{ Transition from \emph{Story} to \emph{Credits screen}.
 \label{lst.story}
 }
-\end{figure*}
+\end{figure}
 
 The campaign world map has clickable blue dots in the two extremes of the
 map road to show introductory and closing ambience stories, respectively.
@@ -1107,8 +1080,8 @@ actions during gameplay (e.g., \emph{walking} to \emph{falling} and back to
 
 \subsubsection{Case Study: \emph{Bomber Action} \Code{draw} and \Code{update} Dispatching}
 
-\begin{figure*}
-\begin{minipage}[t]{0.50\linewidth}
+\begin{figure}[t]
+%\begin{minipage}[t]{0.50\linewidth}
 \begin{lstlisting}[numbers=right]
 class Bomber : public Action {
     <...>
@@ -1129,37 +1102,26 @@ void Bomber::draw () {
     sprite.draw();
 }
 \end{lstlisting}
-\centering\small{\ax Implementation in C++}
-\end{minipage}
+%\centering\small{\ax Implementation in C++}
+%\end{minipage}
+\end{figure}
 %
-\begin{minipage}[t]{0.50\linewidth}
+\begin{figure}[t]
+%\begin{minipage}[t]{0.50\linewidth}
 \begin{lstlisting}[xleftmargin=2em]
 code/await Bomber (void) -> ActionName do
     <...>
     var Sprite sprite = spawn Sprite(<...>);
     <...>
 end
-
-
-
-
-
-
-
-
-
-
-
-
-.
 \end{lstlisting}
-\centering\small{\bx Implementation in \CEU}
-\end{minipage}
+%\centering\small{\bx Implementation in \CEU}
+%\end{minipage}
 %\rule{8.4cm}{0.37pt}
 \caption{ \emph{Bomber action} \code{draw} and \code{update} dispatching.
 \label{lst.hier}
 }
-\end{figure*}
+\end{figure}
 
 \begin{figure*}
 \centering
@@ -1275,6 +1237,7 @@ code removal.
     Entities form a lifespan hierarchy in which a terminating container entity
     automatically destroys its managed children.
 
+\begin{comment}
 \subsubsection{Case Study: Static Game UI Widgets}
 
 \begin{figure}
@@ -1375,6 +1338,7 @@ stack-allocated local variables.
 The \emph{Bomber action} of Section~\ref{sec.pats.fsms.2} also relies on
 lexical scope to delimit the lifespan of the explosion sprite into a single
 frame (Figure~\ref{lst.bomber}, ln 19--25).
+\end{comment}
 
 \subsubsection{Case Study: Dynamic Pingus Lifecycle}
 \label{sec.pats.lifespan.2}
