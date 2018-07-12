@@ -1,7 +1,10 @@
-\documentclass[times,twocolumn,final]{elsarticle}
+\documentclass[10pt, conference, compsocconf]{IEEEtran}
+%\documentclass[times,twocolumn,final]{elsarticle}
 
-\usepackage{cag}
-\usepackage{framed,multirow}
+%\usepackage{cag}
+%\usepackage{framed,multirow}
+
+\usepackage{cite}
 
 \usepackage{amssymb}
 \usepackage{latexsym}
@@ -12,10 +15,9 @@
 
 %\usepackage{hyperref}
 
-\usepackage[switch,pagewise]{lineno} %Required by command \linenumbers below
-
 \usepackage{xspace}
 \usepackage{verbatim}
+\usepackage[pdftex]{graphicx}
 
 \usepackage{listings}
 \lstdefinelanguage{ceu}{%
@@ -52,13 +54,13 @@
 \newcommand{\ax}{\code{[a]}\xspace}
 \newcommand{\bx}{\code{[b]}\xspace}
 
-\journal{Computers \& Graphics}
+%\journal{Computers \& Graphics}
 
 \begin{document}
 
-\verso{Preprint Submitted for review}
+%\verso{Preprint Submitted for review}
 
-\begin{frontmatter}
+%\begin{frontmatter}
 
 \title{Structured Synchronous Reactive Programming for Game Development
         \\ \Large{Case Study: On Rewriting Pingus from C++ to \CEU}}
@@ -100,13 +102,14 @@ word and proper nouns in the title.}
 \end{comment}
 
 %\received{1 February 2017}
-\received{\today}
+%\received{\today}
 %%%% Do not use the below for submitted manuscripts
 %\finalform{28 March 2017}
 %\accepted{2 April 2017}
 %\availableonline{15 May 2017}
 %\communicated{S. Sarkar}
 
+\maketitle
 
 \begin{abstract}
 We present a qualitative case study of rewriting the video game Pingus from C++
@@ -125,7 +128,7 @@ We also categorize the behaviors in four recurrent control-flow patterns that
 likely apply to most games.
 \end{abstract}
 
-\begin{keyword}
+\begin{IEEEkeywords}
 %% MSC codes here, in the form: \MSC code \sep code
 %% or \MSC[2008] code \sep code (2000 is the default)
 %\MSC 41A05\sep 41A10\sep 65D05\sep 65D17
@@ -133,15 +136,15 @@ likely apply to most games.
 %\KWD Computers and Graphics\sep Formatting\sep Guidelines
 %C++                         \sep
 %\CEU                        \sep
-Control Flow                \sep
-Event-Driven Programming    \sep
-Game Logic                  \sep
-Synchronous Reactive Programming
-\end{keyword}
+Control Flow                     ;
+Event-Driven Programming         ;
+Game Logic                       ;
+Synchronous Reactive Programming ;
+\end{IEEEkeywords}
 
-\end{frontmatter}
+%\end{frontmatter}
 
-\linenumbers
+%\linenumbers
 
 \section{Introduction}
 
@@ -1664,8 +1667,8 @@ The authors would like to thank Leonardo Kaplan and Alexander Tkachov for early
 explorations and prototypes of the game rewrite.
 \end{comment}
 
-\newpage
-\bibliographystyle{cag-num-names}
+%\newpage
+\bibliographystyle{abbrv}
 \bibliography{my,other}
 
 \end{document}
