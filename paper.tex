@@ -150,12 +150,12 @@ programmers write code in direct and sequential style.
 Structured reactivity helps describing complex control-flow relationships in
 the game logic more concisely.
 %
-We show gains in productivity for six behaviors in Pingus through a qualitative
-analysis of the proposed implementations in \CEU in comparison to the originals
-in C++.
+We show gains in productivity for four behaviors in Pingus through a
+qualitative analysis of the proposed implementations in \CEU in comparison to
+the originals in C++.
 %
-We also categorize the behaviors in four recurrent control-flow patterns that
-likely apply to most games.
+We also categorize the behaviors in recurrent control-flow patterns that likely
+apply to most games.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -273,7 +273,7 @@ usage (around 5--10\%)~\cite{ceu.sensys13}.
 \CEU has also been used in the context of multimedia
 systems~\cite{ceumedia.webmedia16} and games~\cite{ceu.mod15}.
 
-Our case study shows gains in productivity for six selected behaviors in the
+Our case study shows gains in productivity for four selected behaviors in the
 game logic of Pingus rewritten in \CEU.
 We present an in-depth qualitative analysis of the proposed solutions in
 comparison to the original implementations in C++.
@@ -308,8 +308,8 @@ The rest of the paper is organized as follows:
 Section~\ref{sec.codebase} gives an overview of the Pingus codebases in C++ and
 \CEU and describes our approach to identify and rewrite the control flow in the
 game.
-Section~\ref{sec.pats} discusses six case studies in detail which are
-categorized in four control-flow patterns.
+Section~\ref{sec.pats} discusses four case studies in detail which are
+categorized in recurrent control-flow patterns.
 Section~\ref{sec.related} discusses related work.
 Section~\ref{sec.conclusion} concludes the paper.
 
@@ -438,7 +438,7 @@ control-flow patterns which likely apply to most games:
     %between them.
 \end{enumerate}
 
-We describe six representative game behaviors in detail distributed in the four
+We describe representative game behaviors in detail distributed in the four
 patterns and analyze their implementations in C++ and \CEU.%
 %\footnote{Due to space constraints, we omit three other game behaviors and a
 %fifth pattern \emph{Signaling Mechanisms}.}
@@ -1579,9 +1579,9 @@ We advocate \emph{Structured Synchronous Reactive Programming} as a productive
 alternative for game logic development.
 %
 We use the video game \emph{Pingus} as a qualitative case study.
-We compare the implementation of six game behaviors in C++ and \CEU and discuss
-how structured reactive mechanisms can eliminate callbacks and let programmers
-write code in direct style.
+We compare the implementation of four game behaviors in C++ and \CEU and
+discuss how structured reactive mechanisms can eliminate callbacks and let
+programmers write code in direct style.
 %
 Ultimately, we rewrote about 1/4 of the whole codebase (9.186 from 39.362 lines
 of code) which comprises the core of the game logic that is susceptible to
