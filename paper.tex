@@ -4,7 +4,10 @@
 %\usepackage{cag}
 %\usepackage{framed,multirow}
 
-\usepackage{cite}
+%\usepackage{cite}
+\usepackage[noadjust]{cite}
+\renewcommand{\citepunct}{,\penalty\citepunctpenalty\,}
+\renewcommand{\citedash}{--}% optionally
 
 \usepackage{amssymb}
 \usepackage{latexsym}
@@ -23,11 +26,11 @@
 \lstdefinelanguage{ceu}{%
   language=C,
   morekeywords={%
-    @const, @pure, @safe, CHAN, FOREVER, PAR, PROC, SIGNAL, abort, and,
+    @const, @pure, @safe, NEVER, FOREVER, PAR, PROC, SIGNAL, abort, and,
     await, bool, call, class, data, define, deterministic, do, each, else,
     emit, end, escape, event, every, finalize, hor, implementation, in,
     input, interface, loop, min, native, new, nohold, not, or, output, par,
-    pool, pure, return, s, signal, spawn, tag, then, this, traverse, until,
+    pool, pure, return, s, h, ms, signal, spawn, tag, then, this, traverse, until,
     code, public, private,
     var, watching, when, with},
 }
@@ -44,6 +47,8 @@
   mathescape=true,
   numbersep=4pt,
   numberstyle=\tiny,
+  %xleftmargin=0.5cm,
+  %xrightmargin=0.5cm,
   %upquote=true,
 }
 
@@ -236,22 +241,13 @@ In this sense, callbacks actually disrupt structured programming, becoming
 %\footnote{``Escape from Callback Hell'':
 %\url{elm-lang.org/learn/Escape-from-Callback-Hell.elm}}
 
-In this work, we advocate structured synchronous reactive programming as a more
-productive alternative for game logic development.
+In this work, we advocate structured synchronous reactive programming (SSRP) as
+a more productive alternative for game logic development.
 We present a qualitative case study of rewriting Pingus from C++ to \CEU.
-
-\CEU~\cite{ceu.sensys13,ceu.mod15} is a Esterel-based~\cite{esterel.ieee91}
-programming language that originally targets embedded soft real-time systems.
-It aims to offer a concurrent, safe, and expressive alternative to C with the
-characteristics that follow:
 %
-\begin{itemize}
-\item \textbf{Reactive:} code only executes in reactions to events.
-\item \textbf{Structured:} programs use structured control mechanisms, such as
-    \code{spawn} and \code{await} (to create and suspend activities).
-\item \textbf{Synchronous:} reactions run atomically and to completion on each line of
-    execution, i.e., there's no implicit preemption or real parallelism.
-\end{itemize}
+\CEU~\cite{ceu.tecs17} is a Esterel-based~\cite{esterel.ieee91}
+programming language that originally targets embedded soft real-time systems.
+It aims to offer a concurrent, safe, and expressive alternative to C.
 %
 Structured reactive programming lets developers write code in direct style,
 recovering from the inversion of control imposed by event-driven
@@ -304,6 +300,7 @@ the game compilation and execution.
 This approach shows the feasibility of a partial and gradual translation
 between the languages.
 
+\begin{comment}
 The rest of the paper is organized as follows:
 Section~\ref{sec.codebase} gives an overview of the Pingus codebases in C++ and
 \CEU and describes our approach to identify and rewrite the control flow in the
@@ -312,6 +309,130 @@ Section~\ref{sec.pats} discusses four case studies in detail which are
 categorized in recurrent control-flow patterns.
 Section~\ref{sec.related} discusses related work.
 Section~\ref{sec.conclusion} concludes the paper.
+\end{comment}
+
+\section{An Overview of \CEU}
+\label{sec.ceu}
+
+\CEU is a synchronous reactive language in which programs evolve in a sequence
+of discrete reactions to external events with the characteristics that follow:
+%
+\begin{itemize}
+\item \textbf{Reactive:} code only executes in reactions to events.
+\item \textbf{Structured:} programs use structured control mechanisms, such as
+    \code{spawn} and \code{await} (to create and suspend activities).
+\item \textbf{Synchronous:} reactions run atomically and to completion on each line of
+    execution, i.e., there's no implicit preemption or real parallelism.
+\end{itemize}
+%
+\CEU is designed for control-intensive applications, supporting concurrent
+lines of execution, known as \emph{trails}, and instantaneous broadcast
+communication through events.
+%
+Computations within a reaction (such as expressions, assignments, and system
+calls) are also instantaneous considering the synchronous
+hypothesis~\cite{rp.hypothesis}.
+%
+%\CEU provides an \code{await} statement which is the only that actually
+%``consumes'' time.
+%
+\CEU provides an \code{await} statement that blocks the current running trail
+allowing the program to execute its other trails; when all trails are blocked,
+the reaction terminates and control returns to the environment.
+
+\begin{lstlisting}[
+  float=t,
+  caption={A compact reference of \CEU.},
+  label={lst.syntax},
+]
+// Declarations
+input <type> <id>   // declares an external input event
+event <type> <id>   // declares an internal event
+var   <type> <id>   // declares a variable
+
+// Event handling
+<id> = await <id>   // awaits event and assigns received value
+emit <id>(<exp>)    // emits event passing a value
+
+// Control flow
+<stmt> ; <stmt>                         // sequence
+if <exp> then <stmt> else <stmt> end    // conditional
+loop do <stmt> end                      // repetition
+do <stmt> end                           // explicit block
+
+// Logical parallelism
+par/or  do <stmt> with <stmt> end   // terminates with any
+par/and do <stmt> with <stmt> end   // terminates with all
+
+// Abstractions
+code <id> (<pars>) -> <type> do <stmt> end
+<id> = await <id>(<args>)       // executes and awaits
+spawn <id>(<args>) [in <id>]    // executes and continues
+pool[<num>] <id> <id>           // holds instances
+
+// Assignment & Integration with C/C++
+<id> = <exp>            // assigns a value to a variable
+_<id>(<args>)           // calls C/C++ (id starts with `_')
+\end{lstlisting}
+
+\begin{lstlisting}[
+  numbers=right,xrightmargin=0.5cm,
+  float=t,
+  caption={An example in \CEU that blinks an LED every 500ms in the background
+          and awaits a button click or 1 hour to terminate.},
+  label={lst.ceu},
+]
+input  void BUTTON;
+output bool LED;
+
+code Blink (var int period) -> NEVER do
+    loop do
+        emit LED(true);
+        await (period) ms;
+        emit LED(false);
+        await (period) ms;
+    end
+end
+
+spawn Blink(500);
+par/or do
+    await BUTTON;
+with
+    await 1h;
+end
+\end{lstlisting}
+
+Listing~\ref{lst.syntax} shows a compact reference of \CEU and
+Listing~\ref{lst.ceu} shows a simple example that blinks an LED and terminates
+on a button press or after 1 hour of execution.
+%
+The example declares two external events (ln~1--2): an input that represents
+a button and an output that represents an LED.
+%
+The blink behavior uses a \code{code} abstraction (ln~4--11) which is similar
+to a coroutine or fiber~\cite{sync_async.cooperative}, but which can also
+interact directly with the environment through \code{await} statements
+(ln.~7,9).
+%
+The \code{spawn} statement (ln~13) instantiates a \code{Blink} abstraction to
+execute in the background and the program then creates two trails to await
+two events at the same time (ln~14--18).
+Since the composition is a \code{par/or}, it will terminate when either of the
+two events occur proceeding to the end of the file and consequently also
+terminating the program.
+
+In \CEU, every execution path within loops must contain at least one
+\code{await} statement to an external input
+event~\cite{ceu.sensys13,esterel.primer}.
+%
+On the one hand, \CEU shares a restriction with event-driven programming:
+computations that take a non-negligible time to run (e.g., cryptography or
+image processing algorithms) violate the zero-delay hypothesis, and thus cannot
+be directly implemented.
+%
+On the other hand, all reactions to the external environment are guaranteed to
+be computed in bounded time, ensuring that games progress with
+time~\cite{ceu.lctes18}.
 
 \section{The Pingus Codebase and Rewriting Process}
 \label{sec.codebase}
@@ -409,8 +530,8 @@ statuses, and counters (e.g.,
 Good chances are that such variables encode some form of control-flow
 progression that cross multiple callback invocations.
 %
-Not all state follows these conventions, but they help finding classes that are
-heavy on control flow quickly at the beginning of the process.
+Not all state follows these conventions, but they helped finding classes that
+are heavy on control flow quickly at the beginning of the process.
 
 \section{Control-Flow Patterns \& Case Studies}
 \label{sec.pats}
@@ -451,22 +572,16 @@ patterns and analyze their implementations in C++ and \CEU.%
 
 \subsubsection{Case Study: Detecting Double-Clicks in the \emph{Armageddon Button}}
 
-%\begin{figure}
-%\centering
-%\includegraphics[width=\columnwidth]{double-click-opt}
-%\caption{Double click detection.
-%\label{fig.armageddon}
-%}
-%\end{figure}
-%(Figure~\ref{fig.armageddon}).
-
 In Pingus, a double click in the \emph{Armageddon button} at the bottom right
 of the screen literally explodes all pingus.%
 \footnote{Double click animation: \url{github.com/an000/p/#1} }
 
-\begin{figure}[t]
-%\begin{minipage}[h]{0.50\linewidth}
-\begin{lstlisting}[numbers=right]
+\begin{lstlisting}[
+  numbers=left,xleftmargin=0.5cm,
+  float=t,
+  caption={C++: Detecting double-clicks in the \emph{Armageddon button}.},
+  label={lst.armageddon.a},
+]
 ArmageddonButton::ArmageddonButton(<...>):
     RectComponent(<...>),
     pressed(false); // button is not initially pressed
@@ -502,20 +617,21 @@ void ArmageddonButton::on_click (<...>) {
     }
 }
 \end{lstlisting}
-%\centering\small{\ax Implementation in C++}
-%\end{minipage}%
-%
-%\begin{minipage}[h]{0.50\linewidth}
-%\begin{lstlisting}
-\end{figure}
-\begin{figure}[t]
-\begin{lstlisting}[xleftmargin=2em]
+
+\begin{lstlisting}[
+  numbers=left,xleftmargin=0.5cm,
+  float=t,
+  caption={\CEU: Detecting double-clicks in the \emph{Armageddon button}.},
+  label={lst.armageddon.b},
+]
 do
     var RectComponent but = <...>;
     <...>
     loop do
       await but.on_click;
-      watching 1s do
+      par/or do
+        await 1s;
+      with
         await but.on_click;
         break;
       end
@@ -524,13 +640,6 @@ do
     emit game.armageddon;
 end
 \end{lstlisting}
-%\centering\small{\bx Implementation in \CEU}
-%\end{minipage}%
-%\rule{8.4cm}{0.37pt}
-\caption{ Detecting double-clicks in the \emph{Armageddon button}.
-\label{lst.armageddon}
-}
-\end{figure}
 
 \begin{figure}
 \centering
@@ -541,7 +650,7 @@ end
 }
 \end{figure}
 
-Figure~\ref{lst.armageddon}.a shows the C++ implementation for the class
+Listing~\ref{lst.armageddon.a} shows the C++ implementation for the class
 \code{ArmageddonButton} with methods for rendering the button and handling
 mouse and timer events.
 The code in the figure focus on the double click detection and hides unrelated
@@ -570,7 +679,7 @@ behavior in C++ as a state machine.
 The circles represent the state of the variable \code{pressed}, and the arrows 
 represent the callbacks manipulating it.
 %
-Note in Figure~\ref{lst.armageddon}.a how the accesses to the state variables
+Note in Listing~\ref{lst.armageddon.a} how the accesses to the state variables
 are spread across the entire class: the distance between the initialization of
 \code{pressed} (ln  3) and the last access to it (ln 32) is over 40 lines in
 the original file.
@@ -583,13 +692,13 @@ potentially access them.
 \CEU supports structured constructs to deal with events, aiming to eradicate
 explicit manipulation of state variables for control-flow purposes.
 %
-In Figure~\ref{lst.armageddon}.b, the loop to detect double clicks (ln 4--10)
-awaits the first click (ln 5) and then, while watching 1 second (ln 6--9),
-awaits the second click (ln 7).
+In Listing~\ref{lst.armageddon.b}, the loop to detect double clicks (ln 4--12)
+awaits the first click (ln 5) and then, awaits either a 1-second timeout (ln 7)
+or the second click (ln 9).
 If the second click occurs within 1 second, the \code{break} terminates the
-loop (ln 8) and the \code{emit} in sequence signals the double click to the
-application (ln 12).
-Otherwise, the \code{watching} block as a whole aborts after 1 second  and the
+loop (ln 10) and the \code{emit} in sequence signals the double click to the
+application (ln 14).
+Otherwise, the \code{par/or} block as a whole aborts after 1 second  and the
 loop restarts, falling back to the first click \code{await} (ln 5).
 %
 Double click detection in \CEU does not rely on state variables and is entirely
@@ -716,7 +825,7 @@ void Bomber::draw (SceneContext& gc) {
 \begin{figure}[t]
 %\begin{minipage}[t]{0.50\linewidth}
 %\begin{lstlisting}[xleftmargin=2em]
-code/await Bomber (void) -> ActionName
+code Bomber (void) -> ActionName
 do
     <...>
     spawn Mover(); // movement in background
@@ -756,7 +865,7 @@ end
 }
 \end{figure}
 
-In C++, the class \code{Bomber} in Figure~\ref{lst.bomber}.a defines the
+In C++, the class \code{Bomber} in Listing~\ref{lst.bomber.a} defines the
 callbacks \code{draw} and \code{update} to manage the state machine of
 Figure~\ref{fig.bomber.fsm}.
 %
@@ -789,16 +898,16 @@ across 3 different methods, each intermixing code with unrelated functionality
 (e.g., changing frames, moving, and redrawing).
 
 The equivalent code in \CEU for the \emph{Bomber action} in
-Figure~\ref{lst.bomber}.b does not rely on state variables and reflects the
+Listing~\ref{lst.bomber.b} does not rely on state variables and reflects the
 sequential state machine implicitly, using \code{await} statements to separate
 the effects in direct style.
 %
-The \code{Bomber} is a \code{code/await} abstraction of \CEU, which is similar
+The \code{Bomber} is a \code{code} abstraction of \CEU, which is similar
 to a coroutine or fiber~\cite{sync_async.cooperative}: a subroutine that
 retains runtime state, such as local variables and the program counter, across
 reactions to events (i.e., across \code{await} statements).
 The pingu movement and sprite animation are isolated in two other
-\code{code/await} abstractions and execute in separate through the \code{spawn}
+\code{code} abstractions and execute in separate through the \code{spawn}
 primitive (ln 4--5).
 %In \CEU, if multiple abstractions react to the same event, the scheduler
 %employs lexical order to preserve determinism, i.e., the \code{spawn} that
@@ -874,8 +983,7 @@ machines in direct style.
 Among all 65 implementation files in \CEU, we found 29 cases in 25 files that
 use structured mechanisms to substitute states machines.
 They typically manifest as \code{await} statements in sequence (e.g.,
-ln 5,7 in Figure~\ref{lst.armageddon} and ln 12,16,24 in
-Figure~\ref{lst.bomber}).
+ln 5,7 in Listing~\ref{lst.armageddon.b}).
 %or in aborting constructs such as \code{par/or} and \code{watching}.
 
 \subsection{Continuation Passing}
@@ -886,9 +994,12 @@ Figure~\ref{lst.bomber}).
 
 \subsubsection{ Transition from \emph{Story}  to \emph{Credits} Screen}
 
-\begin{figure}[t]
-%\begin{minipage}[t]{0.50\linewidth}
-\begin{lstlisting}[numbers=right]
+\begin{lstlisting}[
+  numbers=left,xleftmargin=0.5cm,
+  float=t,
+  caption={C++: Transition from \emph{Story} to \emph{Credits screen}.},
+  label={lst.story.a},
+]
 StoryDot::StoryDot(FileReader& reader) :
     show_credits(false), // do not show by default
 {
@@ -929,14 +1040,14 @@ void StoryScreenComp::next_text() {
       }
     }
 }
-%\end{lstlisting}
-%\centering\small{\ax Implementation in C++}
-%\end{minipage}
-\end{figure}
-%
-\begin{figure}[t]
-%\begin{minipage}[t]{0.50\linewidth}
-\begin{lstlisting}[xleftmargin=2em]
+\end{lstlisting}
+
+\begin{lstlisting}[
+  numbers=left,xleftmargin=0.5cm,
+  float=t,
+  caption={\CEU: Transition from \emph{Story} to \emph{Credits screen}.},
+  label={lst.story.b},
+]
 loop do
     var int ret = await Worldmap();
     if ret==CREDITS or ret==BACK then
@@ -951,13 +1062,6 @@ loop do
     end
 end
 \end{lstlisting}
-%\centering\small{\bx Implementation in \CEU}
-%\end{minipage}
-%\rule{8.4cm}{0.37pt}
-\caption{ Transition from \emph{Story} to \emph{Credits screen}.
-\label{lst.story}
-}
-\end{figure}
 
 The campaign world map has clickable blue dots in the two extremes of the
 map road to show introductory and closing ambience stories, respectively.
@@ -967,7 +1071,7 @@ For closing stories, the game also shows a \emph{Credits screen} before
 returning to the world map.%
 \footnote{Credits screen animation: \url{github.com/an000/p/#4} }
 
-In C++, the class \code{StoryDot} in Figure~\ref{lst.story}.a (ln 1--12) first
+In C++, the class \code{StoryDot} in Listing~\ref{lst.story.a} (ln 1--12) first
 reads the level file (ln 5) to check whether it is a closing story and should,
 after termination, show the \emph{Credits screen}.
 %
@@ -981,7 +1085,7 @@ When the method \code{next\_text} has no story pages left to display
 (ln 32--38), it decides where to go next, depending on the continuation flag
 \code{show\_credits} (ln 33).
 
-In \CEU, the \code{loop} of Figure~\ref{lst.story}.b controls the flow between
+In \CEU, the \code{loop} of Listing~\ref{lst.story.b} controls the flow between
 the screens to show as a direct sequence of statements.
 %
 We first invoke the \code{Worldmap} (ln 2), which shows the map and lets
@@ -1009,33 +1113,33 @@ C++ and the \emph{direct style} of \CEU for screen transitions:
     \begin{itemize}
     %\setlength\itemsep{0em}
     \item C++ uses an explicit stack to push the \code{Worldmap} screen (not
-          shown in Figure~\ref{lst.story}.a).
+          shown in Listing~\ref{lst.story.a}).
     \item \CEU invokes the \code{Worldmap} screen expecting a return value
-          (Figure~\ref{lst.story}.b, ln 2).
+          (Listing~\ref{lst.story.b}, ln 2).
     \end{itemize}
 \item \code{Worldmap} (\emph{blue dot click}) $\longrightarrow$ \code{Story}:
     \begin{itemize}
     %\setlength\itemsep{0em}
     \item C++ pushes the \code{Story} screen passing the continuation flag
-          (Figure~\ref{lst.story}.a, ln 10).
+          (Listing~\ref{lst.story.a}, ln 10).
     \item \CEU stores the \code{Worldmap} return value and invokes the \code{Story} screen
-          (Figure~\ref{lst.story}.b, ln 2,5).
+          (Listing~\ref{lst.story.b}, ln 2,5).
     \end{itemize}
 \item \code{Story} $\longrightarrow$ \code{Credits}:
     \begin{itemize}
     %\setlength\itemsep{0em}
     \item C++ replaces the current \code{Story} screen with the \code{Credits}
-          screen (Figure~\ref{lst.story}.a, ln 34).
+          screen (Listing~\ref{lst.story.a}, ln 34).
     \item \CEU invokes the \code{Credits} screen after the \code{await Story}
-          returns (Figure~\ref{lst.story}.b, ln 8).
+          returns (Listing~\ref{lst.story.b}, ln 8).
     \end{itemize}
 \item \code{Credits} $\longrightarrow$ \code{Worldmap}:
     \begin{itemize}
     %\setlength\itemsep{0em}
     \item C++ pops the \code{Credits} screen, going back to the \code{Worldmap}
-          screen (not shown in Figure~\ref{lst.story}.a).
+          screen (not shown in Listing~\ref{lst.story.a}).
     \item \CEU uses an enclosing \code{loop} to restart the process
-          (Figure~\ref{lst.story}.b, ln 1--13).
+          (Listing~\ref{lst.story.b}, ln 1--13).
     \end{itemize}
 \end{enumerate}
 
@@ -1080,9 +1184,12 @@ actions during gameplay (e.g., \emph{walking} to \emph{falling} and back to
 
 \subsubsection{Case Study: \emph{Bomber Action} \Code{draw} and \Code{update} Dispatching}
 
-\begin{figure}[t]
-%\begin{minipage}[t]{0.50\linewidth}
-\begin{lstlisting}[numbers=right]
+\begin{lstlisting}[
+  numbers=left,xleftmargin=0.5cm,
+  float=t,
+  caption={C++: \emph{Bomber action} \code{draw} and \code{update} dispatching.},
+  label={lst.hier.a},
+]
 class Bomber : public Action {
     <...>
     Sprite sprite;
@@ -1102,26 +1209,19 @@ void Bomber::draw () {
     sprite.draw();
 }
 \end{lstlisting}
-%\centering\small{\ax Implementation in C++}
-%\end{minipage}
-\end{figure}
-%
-\begin{figure}[t]
-%\begin{minipage}[t]{0.50\linewidth}
-\begin{lstlisting}[xleftmargin=2em]
-code/await Bomber (void) -> ActionName do
+
+\begin{lstlisting}[
+  numbers=left,xleftmargin=0.5cm,
+  float=t,
+  caption={\CEU: \emph{Bomber action} \code{draw} and \code{update} dispatching.},
+  label={lst.hier.b},
+]
+code Bomber (void) -> ActionName do
     <...>
     var Sprite sprite = spawn Sprite(<...>);
     <...>
 end
 \end{lstlisting}
-%\centering\small{\bx Implementation in \CEU}
-%\end{minipage}
-%\rule{8.4cm}{0.37pt}
-\caption{ \emph{Bomber action} \code{draw} and \code{update} dispatching.
-\label{lst.hier}
-}
-\end{figure}
 
 \begin{figure*}
 \centering
@@ -1131,7 +1231,7 @@ end
 }
 \end{figure*}
 
-In C++, the class \code{Bomber} in Figure~\ref{lst.hier}.a declares a
+In C++, the class \code{Bomber} in Listing~\ref{lst.hier.a} declares a
 \code{sprite} member (ln 3) to handle its animation frames.
 %
 The \code{Sprite} class is part of the game engine and knows how to update and
@@ -1185,7 +1285,7 @@ current screen and redirect all dispatches to a new screen (step 2).
 Like \code{update}, the \code{draw} callback also flows through a similar
 dispatching hierarchy until reaching the \code{Sprite} class.
 
-In \CEU, the \code{Bomber} abstraction presented in Figure~\ref{lst.hier}.b
+In \CEU, the \code{Bomber} abstraction presented in Listing~\ref{lst.hier.b}
 spawns a \code{Sprite} animation instance on its body (ln 3).
 %
 The \code{Sprite} abstraction can react directly to external \code{update}
@@ -1274,7 +1374,7 @@ GameSession::GameSession(<...>) :
 %
 \begin{minipage}[t]{0.50\linewidth}
 \begin{lstlisting}[xleftmargin=2em]
-code/await Game (void) do
+code Game (void) do
     <...> // other coexisting functionality
     spawn ButtonPanel(<...>);
     spawn PingusCounter(<...>);
@@ -1356,9 +1456,12 @@ conditions, such as falling from a high altitude.%
 \footnote{Death of pingus animation: \url{github.com/an000/p/#5} }
 %
 
-\begin{figure*}
-\begin{minipage}[t]{0.50\linewidth}
-\begin{lstlisting}[numbers=right]
+\begin{lstlisting}[
+  numbers=left,xleftmargin=0.5cm,
+  float=t,
+  caption={C++: Managing the pingus lifecycle.},
+  label={lst.pingus.a},
+]
 Pingu* PinguHolder::create_pingu (<...>) {
     <...>
     Pingu* pingu = new Pingu (<...>);
@@ -1377,25 +1480,25 @@ void PinguHolder::update() {
       ++pingu;
     }
 }
-
-.
 \end{lstlisting}
-\centering\small{\ax Implementation in C++}
-\end{minipage}
-%
-\begin{minipage}[t]{0.50\linewidth}
-\begin{lstlisting}[xleftmargin=2em]
-code/await Game (void) do
+
+\begin{lstlisting}[
+  numbers=left,xleftmargin=0.5cm,
+  float=t,
+  caption={\CEU: Managing the pingus lifecycle.},
+  label={lst.pingus.b},
+]
+code Game (void) do
     <...>
     pool[] Pingu pingus;
-    code/await Pingu_Spawn (<...>) do
+    code Pingu_Spawn (<...>) do
       <...>
       spawn Pingu(<...>) in pingus;
     end
     <...>   // code invoking Pingu_Spawn
 end
 
-code/await Pingu (<...>) do
+code Pingu (<...>) do
     <...>
     loop do
       await game.update;
@@ -1406,15 +1509,8 @@ code/await Pingu (<...>) do
     end
 end
 \end{lstlisting}
-\centering\small{\bx Implementation in \CEU}
-\end{minipage}
-%\rule{8.4cm}{0.37pt}
-\caption{ Managing the pingus lifecycle.
-\label{lst.pingus}
-}
-\end{figure*}
 
-In C++, the class \code{PinguHolder} in Figure~\ref{lst.pingus}.a is a
+In C++, the class \code{PinguHolder} in Listing~\ref{lst.pingus.a} is a
 container that holds all alive pingus.
 %
 The method \code{PinguHolder::create\_pingu} (ln 1--6) is called periodically
@@ -1449,7 +1545,7 @@ Hence, entities with dynamic lifespan always require explicit matching
 In addition, the \code{spawn} statement supports a pool identifier to associate
 a new instance with a pool.
 %
-The game screen in Figure~\ref{lst.pingus}.b spawns a new \code{Pingu} on every
+The game screen in Listing~\ref{lst.pingus.b} spawns a new \code{Pingu} on every
 invocation of \code{Pingu\_Spawn} (ln 4--7).
 %
 The \code{spawn} statement (ln 6) specifies the pool declared at the top-level
