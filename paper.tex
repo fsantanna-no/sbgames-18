@@ -236,8 +236,8 @@ programming~\cite{rp.deprecating,rp.rescala,sync_async.cooperative}.
 %
 In this sense, callbacks actually disrupt structured programming, becoming
 ``our generation's \emph{goto}''.%
-%\footnote{``Callbacks as our Generations' \emph{goto} Statement'':
-%\url{tirania.org/blog/archive/2013/Aug-15.html}}
+\footnote{``Callbacks as our Generations' \emph{goto} Statement'':
+\url{tirania.org/blog/archive/2013/Aug-15.html}}
 %\footnote{``Escape from Callback Hell'':
 %\url{elm-lang.org/learn/Escape-from-Callback-Hell.elm}}
 
@@ -249,8 +249,8 @@ We present a qualitative case study of rewriting Pingus from C++ to \CEU.
 programming language that originally targets embedded soft real-time systems.
 It aims to offer a concurrent, safe, and expressive alternative to C.
 %
-Structured reactive programming lets developers write code in direct style,
-recovering from the inversion of control imposed by event-driven
+SSRP lets developers write code in direct style, recovering from the inversion
+of control imposed by event-driven
 execution~\cite{rp.deprecating,rp.rescala,sync_async.cooperative}.
 %
 %\CEU provides primitives that help describing complex control-flow
@@ -264,7 +264,7 @@ memory management~\cite{ceu.sensys13}.
 Existing work in the context of embedded sensor networks evaluates the
 expressiveness of \CEU in comparison to event-driven code in C and attests a
 reduction in source code size (around 25\%) with a small increase in memory
-usage (around 5--10\%)~\cite{ceu.sensys13}.
+usage (around 5--10\%) and comparable CPU responsiveness~\cite{ceu.sensys13}.
 %
 \CEU has also been used in the context of multimedia
 systems~\cite{ceumedia.webmedia16} and games~\cite{ceu.mod15}.
@@ -284,8 +284,8 @@ We also identify four control-flow patterns that likely apply to most games:
         \emph{Dispatching Hierarchies}, and
         \emph{Lifespan Hierarchies}.
 %
-A control-flow pattern is a recurring technique to describe execution
-dependency and/or explicit ordering between statements.
+In this context, a control-flow pattern is a recurring technique to describe
+execution dependency and/or explicit ordering between statements.
 % (or groups of statements).
 %For instance, consider how a key press stimulus propagates through the game
 %entities and also what happens with them if the stimulus causes the end of the
@@ -298,7 +298,8 @@ codebase in C++, we reimplemented it piece-by-piece in \CEU without breaking
 the game compilation and execution.
 %
 This approach shows the feasibility of a partial and gradual translation
-between the languages.
+between the languages, and also the possibility of keeping performance-critical
+functionality in C++, such as in heavy graphical primitives.
 
 \begin{comment}
 The rest of the paper is organized as follows:
@@ -310,35 +311,6 @@ categorized in recurrent control-flow patterns.
 Section~\ref{sec.related} discusses related work.
 Section~\ref{sec.conclusion} concludes the paper.
 \end{comment}
-
-\section{An Overview of \CEU}
-\label{sec.ceu}
-
-\CEU is a synchronous reactive language in which programs evolve in a sequence
-of discrete reactions to external events with the characteristics that follow:
-%
-\begin{itemize}
-\item \textbf{Reactive:} code only executes in reactions to events.
-\item \textbf{Structured:} programs use structured control mechanisms, such as
-    \code{spawn} and \code{await} (to create and suspend activities).
-\item \textbf{Synchronous:} reactions run atomically and to completion on each line of
-    execution, i.e., there's no implicit preemption or real parallelism.
-\end{itemize}
-%
-\CEU is designed for control-intensive applications, supporting concurrent
-lines of execution, known as \emph{trails}, and instantaneous broadcast
-communication through events.
-%
-Computations within a reaction (such as expressions, assignments, and system
-calls) are also instantaneous considering the synchronous
-hypothesis~\cite{rp.hypothesis}.
-%
-%\CEU provides an \code{await} statement which is the only that actually
-%``consumes'' time.
-%
-\CEU provides an \code{await} statement that blocks the current running trail
-allowing the program to execute its other trails; when all trails are blocked,
-the reaction terminates and control returns to the environment.
 
 \begin{lstlisting}[
   float=t,
@@ -402,9 +374,39 @@ with
 end
 \end{lstlisting}
 
+\section{An Overview of \CEU}
+\label{sec.ceu}
+
+\CEU is a synchronous reactive language in which programs evolve in a sequence
+of discrete reactions to external events with the characteristics that follow:
+%
+\begin{itemize}
+\item \textbf{Reactive:} code only executes in reactions to events.
+\item \textbf{Structured:} programs use structured control mechanisms, such as
+    \code{spawn} and \code{await} (to create and suspend activities).
+\item \textbf{Synchronous:} reactions run atomically and to completion on each line of
+    execution, i.e., there's no implicit preemption or real parallelism.
+\end{itemize}
+%
+\CEU is designed for control-intensive applications, supporting concurrent
+lines of execution, known as \emph{trails}, and instantaneous broadcast
+communication through events.
+%
+Computations within a reaction (such as expressions, assignments, and system
+calls) are also instantaneous considering the synchronous
+hypothesis~\cite{rp.hypothesis}.
+%
+%\CEU provides an \code{await} statement which is the only that actually
+%``consumes'' time.
+%
+\CEU provides an \code{await} statement that blocks the current running trail
+allowing the program to execute its other trails; when all trails are blocked,
+the reaction terminates and control returns to the environment to process
+upcoming events (e.g., mouse clicks and timers).
+
 Listing~\ref{lst.syntax} shows a compact reference of \CEU and
 Listing~\ref{lst.ceu} shows a simple example that blinks an LED and terminates
-on a button press or after 1 hour of execution.
+either on a button press or after 1 hour of execution.
 %
 The example declares two external events (ln~1--2): an input that represents
 a button and an output that represents an LED.
@@ -425,14 +427,14 @@ In \CEU, every execution path within loops must contain at least one
 \code{await} statement to an external input
 event~\cite{ceu.sensys13,esterel.primer}.
 %
-On the one hand, \CEU shares a restriction with event-driven programming:
-computations that take a non-negligible time to run (e.g., cryptography or
-image processing algorithms) violate the zero-delay hypothesis, and thus cannot
-be directly implemented.
+On the one hand, \CEU shares a restriction with standard event-driven
+programming: computations that take a non-negligible time to run (e.g.,
+cryptography or image processing algorithms) violate the zero-delay hypothesis,
+and thus cannot be directly implemented.
 %
 On the other hand, all reactions to the external environment are guaranteed to
-be computed in bounded time, ensuring that games progress with
-time~\cite{ceu.lctes18}.
+be computed in bounded time~\cite{ceu.lctes18}, ensuring that games progress
+with time.
 
 \section{The Pingus Codebase and Rewriting Process}
 \label{sec.codebase}
@@ -446,7 +448,7 @@ time~\cite{ceu.lctes18}.
 {\footnotesize
 \begin{verbatim}
           Path             Ceu     C++   Ceu/C++    Description
-          ------------    ----    ----    ----      --------------------------------------
+          ------------    ----    ----    ----      ----------------------------------------
      1    game/           2064    2268    0.91      the main gameplay
      2      ./             710     679    1.05        main functionality
      3      objs/          470     478    0.98        world objects (tiles, traps, etc)
@@ -455,8 +457,8 @@ time~\cite{ceu.lctes18}.
      6        actions/     541     653    0.83          pingu actions (bomber, climber, etc)
      7    worldmap/        468     493    0.95      campaign worldmap
      8    screens/        1109    1328    0.84      menus and screens
-     9        option/      347     357    0.97        option menu
-    10        others/      762     971    0.78        other menus and screens
+     9      option/        347     357    0.97        option menu
+    10      others/        762     971    0.78        other menus and screens
     11    misc/             56      46    1.22      miscellaneous functionality
                           ----    ----    ----
                           3697    4135    0.89
@@ -502,7 +504,7 @@ implementations.
 
 Although the analysis in this work is qualitative, the rows with lower ratio
 numbers in Figure~\ref{tab.tree} do correlate with the parts of the game
-logic that we consider more susceptible to structured reactive programming.
+logic that we consider more susceptible to SSRP.
 For instance, the \emph{Pingu} behavior (row 4, \emph{ratio 0.80}) contains
 complex animations that are affected by timers, game rules, and user
 interaction.
@@ -618,6 +620,46 @@ void ArmageddonButton::on_click (<...>) {
 }
 \end{lstlisting}
 
+Listing~\ref{lst.armageddon.a} shows the C++ implementation for the class
+\code{ArmageddonButton} with methods for rendering the button and handling
+mouse and timer events.
+The code in the figure focus on the double click detection and hides unrelated
+parts with \code{<...>}.
+%
+The methods \code{update} (ln 14--26) and \code{on\_click} (ln 28--34) are
+examples of \emph{short-lived callbacks}, which are pieces of code that execute
+atomically in reaction to external input events.
+The callback \code{on\_click} reacts to mouse clicks detected by the base class
+\code{RectComponent} (ln 2), while the callback \code{update} continuously
+reacts to the passage of time, frame by frame.
+%
+%Callbacks are short lived because they must react to input as fast as possible
+%to let other callbacks execute, keeping the game with real-time responsiveness.
+%
+The class first initializes the variable \code{pressed} (ln 3) to track the
+first click (ln 32).
+It also initializes the variable \code{press\_time} (ln 4) to count the time
+since the first click (ln 16--17).
+If another click occurs within 1 second, the class signals the double click to
+the application (ln 29--30).
+Otherwise, the \code{pressed} and \code{press\_time} state variables are reset
+(ln 18--21).
+%
+Figure~\ref{fig.armageddon.fsm} illustrates how we can model the double-click 
+behavior in C++ as a state machine.
+The circles represent the state of the variable \code{pressed}, and the arrows 
+represent the callbacks manipulating it.
+%
+Note in Listing~\ref{lst.armageddon.a} how the accesses to the state variables
+are spread across the entire class: the distance between the initialization of
+\code{pressed} (ln  3) and the last access to it (ln 32) is over 40 lines in
+the original file.
+Arguably, this dispersion of code across methods makes the understanding and 
+maintenance of the double-click behavior more difficult.
+Also, even though the state variables are private, unrelated methods such as 
+\code{draw}, which is defined in middle of the class (ln 10--12), can
+potentially access them.
+
 \begin{lstlisting}[
   numbers=left,xleftmargin=0.5cm,
   float=t,
@@ -650,45 +692,6 @@ end
 }
 \end{figure}
 
-Listing~\ref{lst.armageddon.a} shows the C++ implementation for the class
-\code{ArmageddonButton} with methods for rendering the button and handling
-mouse and timer events.
-The code in the figure focus on the double click detection and hides unrelated
-parts with \code{<...>}.
-%
-The methods \code{update} (ln 14--26) and \code{on\_click} (ln 28--34) are
-examples of \emph{short-lived callbacks}, which are pieces of code that execute
-atomically in reaction to external input events.
-The callback \code{on\_click} reacts to mouse clicks detected by the base class
-\code{RectComponent} (ln 2), while the callback \code{update} continuously
-reacts to the passage of time, frame by frame.
-%Callbacks are short lived because they must react to input as fast as possible
-%to let other callbacks execute, keeping the game with real-time responsiveness.
-%
-The class first initializes the variable \code{pressed} (ln 3) to track the
-first click (ln 32).
-It also initializes the variable \code{press\_time} (ln 4) to count the time
-since the first click (ln 16--17).
-If another click occurs within 1 second, the class signals the double click to
-the application (ln 29--30).
-Otherwise, the \code{pressed} and \code{press\_time} state variables are reset
-(ln 18--21).
-%
-Figure~\ref{fig.armageddon.fsm} illustrates how we can model the double-click 
-behavior in C++ as a state machine.
-The circles represent the state of the variable \code{pressed}, and the arrows 
-represent the callbacks manipulating it.
-%
-Note in Listing~\ref{lst.armageddon.a} how the accesses to the state variables
-are spread across the entire class: the distance between the initialization of
-\code{pressed} (ln  3) and the last access to it (ln 32) is over 40 lines in
-the original file.
-Arguably, this dispersion of code across methods makes the understanding and 
-maintenance of the double-click behavior more difficult.
-Also, even though the state variables are private, unrelated methods such as 
-\code{draw}, which is defined in middle of the class (ln 10--12), can
-potentially access them.
-
 \CEU supports structured constructs to deal with events, aiming to eradicate
 explicit manipulation of state variables for control-flow purposes.
 %
@@ -703,8 +706,8 @@ loop restarts, falling back to the first click \code{await} (ln 5).
 %
 Double click detection in \CEU does not rely on state variables and is entirely
 self-contained in the \code{loop} body.
-Also, those 7 lines of code \emph{only} detect the double click, leaving the
-actual effect (ln 12) as well as all unrelated code (such as redrawing the
+Also, those 9 lines of code \emph{only} detect the double click, leaving the
+actual effect (ln 14) as well as all unrelated code (such as redrawing the
 button) to happen outside the loop.
 
 The \code{await} statement of \CEU allows for nested control-flow statements to
@@ -948,6 +951,14 @@ However, this approach is not fundamentally different from Pingus' use of
 \code{switch} or \code{if} branches to decode state.
 
 \begin{figure}
+\centering
+\includegraphics[width=120px]{bomber-01}
+\caption{ Assigning the \emph{Bomber action} to a pingu.
+\label{fig.bomber.action}
+}
+\end{figure}
+
+\begin{figure}
 {\footnotesize
 \begin{verbatim}
 Action       Ceu    C++   Explicit State
@@ -964,7 +975,18 @@ Splashed       6     19   2 state variables
 }
 \end{figure}
 
-Pingus supports 16 actions in the game.
+In Pingus, the player may assign actions to specific pingus, as illustrated in
+Figure~\ref{fig.bomber.action}.
+%
+The \emph{Bomber action} explodes the clicked pingu, throwing particles around
+and also destroying the terrain under its radius.%
+\footnote{Bomber action animation: \url{github.com/an000/p/#2} }
+%
+We model the explosion animation with a sequential state machine with effects
+associated to specific frames, such as playing a sound and throwing the
+particles.
+%
+Pingus supports other 15 actions in the game.
 Five of them implement at least one state machine and are considerable smaller
 in \CEU in terms of \locs (Figure~\ref{tab.actions}).
 %(after eliminating the state variables).
@@ -983,7 +1005,7 @@ machines in direct style.
 Among all 65 implementation files in \CEU, we found 29 cases in 25 files that
 use structured mechanisms to substitute states machines.
 They typically manifest as \code{await} statements in sequence (e.g.,
-ln 5,7 in Listing~\ref{lst.armageddon.b}).
+ln 5,9 in Listing~\ref{lst.armageddon.b}).
 %or in aborting constructs such as \code{par/or} and \code{watching}.
 
 \subsection{Continuation Passing}
@@ -992,12 +1014,37 @@ ln 5,7 in Listing~\ref{lst.armageddon.b}).
     The completion of a long-lasting activity in the game may carry a
     continuation, i.e., some action to execute next.
 
-\subsubsection{ Transition from \emph{Story}  to \emph{Credits} Screen}
+\subsubsection{ Transition from \emph{Story}  to \emph{Credits} and \emph{Worldmap} Screen}
+
+The campaign world map has clickable blue dots in the two extremes of the
+map road to show introductory and closing ambience stories, respectively.
+For introductory stories, the game returns to the world map after showing 
+the story pages.
+For closing stories, the game also shows a \emph{Credits screen} before
+returning to the world map.%
+\footnote{Credits screen animation: \url{github.com/an000/p/#4} }
+From the click in the story dot until the return to the world map, the game
+animates the story with a timer-based scrolling and also reacts to user input
+to advance it.
+
+In C++, the class \code{StoryDot} in Listing~\ref{lst.story.a} (ln 1--12) first
+reads the level file (ln 5) to check whether it is a closing story and should,
+after termination, show the \emph{Credits screen}.
+%
+The boolean variable \code{show\_credits} (ln 2,5,10) is passed to the class
+\code{StoryScreen} (ln 10) and represents the screen continuation, i.e., what
+to do after showing the story.
+The class \code{StoryScreen} (not shown) then forwards the continuation even
+further to the auxiliary class \code{StoryScreenComp} (ln 16--40).
+%
+When the method \code{next\_text} has no story pages left to display
+(ln 32--38), it decides where to go next, depending on the continuation flag
+\code{show\_credits} (ln 33).
 
 \begin{lstlisting}[
   numbers=left,xleftmargin=0.5cm,
   float=t,
-  caption={C++: Transition from \emph{Story} to \emph{Credits screen}.},
+  caption={C++: Transition from \emph{Story} to \emph{Credits} and \emph{Worldmap} screen.},
   label={lst.story.a},
 ]
 StoryDot::StoryDot(FileReader& reader) :
@@ -1045,7 +1092,7 @@ void StoryScreenComp::next_text() {
 \begin{lstlisting}[
   numbers=left,xleftmargin=0.5cm,
   float=t,
-  caption={\CEU: Transition from \emph{Story} to \emph{Credits screen}.},
+  caption={\CEU: Transition from \emph{Story} to \emph{Credits} and \emph{Worldmap} screen.},
   label={lst.story.b},
 ]
 loop do
@@ -1063,30 +1110,8 @@ loop do
 end
 \end{lstlisting}
 
-The campaign world map has clickable blue dots in the two extremes of the
-map road to show introductory and closing ambience stories, respectively.
-For introductory stories, the game returns to the world map after showing 
-the story pages.
-For closing stories, the game also shows a \emph{Credits screen} before
-returning to the world map.%
-\footnote{Credits screen animation: \url{github.com/an000/p/#4} }
-
-In C++, the class \code{StoryDot} in Listing~\ref{lst.story.a} (ln 1--12) first
-reads the level file (ln 5) to check whether it is a closing story and should,
-after termination, show the \emph{Credits screen}.
-%
-The boolean variable \code{show\_credits} (ln 2,5,10) is passed to the class
-\code{StoryScreen} (ln 10) and represents the screen continuation, i.e., what
-to do after showing the story.
-The class \code{StoryScreen} (not shown) then forwards the continuation even
-further to the auxiliary class \code{StoryScreenComp} (ln 16--40).
-%
-When the method \code{next\_text} has no story pages left to display
-(ln 32--38), it decides where to go next, depending on the continuation flag
-\code{show\_credits} (ln 33).
-
 In \CEU, the \code{loop} of Listing~\ref{lst.story.b} controls the flow between
-the screens to show as a direct sequence of statements.
+the screens as a direct sequence of statements.
 %
 We first invoke the \code{Worldmap} (ln 2), which shows the map and lets
 the player interact with it (e.g., walking around) until a dot is clicked.
@@ -1164,11 +1189,11 @@ continuation-passing style of C++:
       self-contained block of code. % TODO: esta no outro exemplo
 \end{itemize}
 
-Continuation passing typically controls the overall structure of the game in
-C++, such as screen transitions in menus and level progressions.
+Continuation passing typically controls the overall structure of games in, such
+as screen transitions in menus and level progressions.
 %
-\CEU adopts the direct style technique in five cases involving screen
-transitions:
+In Pingus, \CEU adopts the direct style technique in five cases involving
+screen transitions:
 the main menu, the level menu, the level set menu, the world map loop, and
 the gameplay loop.
 %
@@ -1210,27 +1235,6 @@ void Bomber::draw () {
 }
 \end{lstlisting}
 
-\begin{lstlisting}[
-  numbers=left,xleftmargin=0.5cm,
-  float=t,
-  caption={\CEU: \emph{Bomber action} \code{draw} and \code{update} dispatching.},
-  label={lst.hier.b},
-]
-code Bomber (void) -> ActionName do
-    <...>
-    var Sprite sprite = spawn Sprite(<...>);
-    <...>
-end
-\end{lstlisting}
-
-\begin{figure*}
-\centering
-\includegraphics[width=\textwidth]{hierarchy}
-\caption{Dispatching chain for \code{update}.
-\label{fig.hier}
-}
-\end{figure*}
-
 In C++, the class \code{Bomber} in Listing~\ref{lst.hier.a} declares a
 \code{sprite} member (ln 3) to handle its animation frames.
 %
@@ -1262,8 +1266,8 @@ chain of 7 method dispatches (Figure~\ref{fig.hier}):
       \code{Sprite::update} finally updates the animation frame.
 \end{enumerate}
 %
-Each dispatching step in the chain is indeed necessary considering the game
-architecture:
+Each dispatching step in the chain is indeed necessary considering the typical
+OO game architecture:
 %
 \begin{itemize}
 %\setlength\itemsep{0em}
@@ -1285,11 +1289,32 @@ current screen and redirect all dispatches to a new screen (step 2).
 Like \code{update}, the \code{draw} callback also flows through a similar
 dispatching hierarchy until reaching the \code{Sprite} class.
 
+\begin{lstlisting}[
+  numbers=left,xleftmargin=0.5cm,
+  float=t,
+  caption={\CEU: \emph{Bomber action} \code{draw} and \code{update} dispatching.},
+  label={lst.hier.b},
+]
+code Bomber (void) -> ActionName do
+    <...>
+    var Sprite sprite = spawn Sprite(<...>);
+    <...>
+end
+\end{lstlisting}
+
+\begin{figure*}
+\centering
+\includegraphics[width=\textwidth]{hierarchy}
+\caption{Dispatching chain for \code{update}.
+\label{fig.hier}
+}
+\end{figure*}
+
 In \CEU, the \code{Bomber} abstraction presented in Listing~\ref{lst.hier.b}
 spawns a \code{Sprite} animation instance on its body (ln 3).
 %
-The \code{Sprite} abstraction can react directly to external \code{update}
-and \code{draw} events, bypassing the program hierarchy entirely.
+However, in \CEU, the \code{Sprite} abstraction can react directly to external
+\code{update} and \code{draw} events, bypassing the program hierarchy entirely.
 Events in \CEU are broadcasted to the entire application in lexical order,
 i.e., an abstraction that appears first in the source code (e.g., ln 3) reacts
 before another one that appears second (e.g., hidden in ln 4).
@@ -1327,9 +1352,9 @@ to the environment, not depending on hierarchies spread across multiple files.
 
 Note that dispatching hierarchies cross game engine code, suggesting that most
 games also rely heavily on this control-flow pattern.
-In the case of the Pingus engine, we rewrote 9 files with a reduction from 515
-to 173 \locs (not listed in Figure~\ref{tab.tree}), mostly due to dispatching
-code removal.
+In the case of the Pingus engine, we rewrote 9 of its files with a reduction
+from 515 to 173 \locs, mostly due to dispatching code removal (not listed in
+Figure~\ref{tab.tree}, since it's engine code).
 
 \subsection{Lifespan Hierarchies}
 \label{sec.pats.lifespan}
@@ -1623,7 +1648,7 @@ broadcast.
 
 A number of domain-specific languages, frameworks, and techniques have been
 proposed for particular subsystems of the game logic, such as
-animations~\cite{games.anims.2006,games.anims.2003,games.anims.1996,games.anims.1982},
+animations~\cite{games.anims.2006,games.anims.2003,games.anims.1996}, %,games.anims.1982
 game state and screen progression~\cite{games.fsms.2006.1,games.fsms.2006.2}, and
 behavior and AI modeling~\cite{games.bts,games.bts.unreal}.
 %
@@ -1715,10 +1740,10 @@ In \CEU, all entities have an associated lexical scope, similarly to local
 variables with automatic memory management.
 %This reduces explicit manipulation of pointers and references considerably.
 
-Overall, we most difficulties in implementing control-flow behavior in game
-logic is not inherent to this domain, but a result of accidental complexity due
-to the lack of structured abstractions and an appropriate concurrency model to
-develop event-based applications.
+Overall, we consider that most difficulties in implementing control-flow
+behavior in game logic is not inherent to this domain, but a result of
+accidental complexity due to the lack of structured abstractions and an
+appropriate concurrency model to develop event-based applications.
 
 \begin{comment}
 \section*{Acknowledgments}
