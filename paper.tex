@@ -269,8 +269,8 @@ usage (around 5--10\%) and comparable CPU responsiveness~\cite{ceu.sensys13}.
 \CEU has also been used in the context of multimedia
 systems~\cite{ceumedia.webmedia16} and games~\cite{ceu.mod15}.
 
-Our case study shows gains in productivity for four selected behaviors in the
-game logic of Pingus rewritten in \CEU.
+Our case study discusses the gains in productivity for four selected behaviors
+in the game logic of Pingus rewritten in \CEU.
 We present an in-depth qualitative analysis of the proposed solutions in
 comparison to the original implementations in C++.
 %
@@ -299,7 +299,7 @@ the game compilation and execution.
 %
 This approach shows the feasibility of a partial and gradual translation
 between the languages, and also the possibility of keeping performance-critical
-functionality in C++, such as in heavy graphical primitives.
+functionality in C++, such as for heavy graphical primitives.
 
 \begin{comment}
 The rest of the paper is organized as follows:
@@ -343,15 +343,15 @@ spawn <id>(<args>) [in <id>]    // executes and continues
 pool[<num>] <id> <id>           // holds instances
 
 // Assignment & Integration with C/C++
-<id> = <exp>            // assigns a value to a variable
-_<id>(<args>)           // calls C/C++ (id starts with `_')
+<id> = <exp>        // assigns a value to a variable
+_<id>(<args>)       // calls C/C++ (id starts with `_')
 \end{lstlisting}
 
 \begin{lstlisting}[
   numbers=right,xrightmargin=0.5cm,
   float=t,
   caption={An example in \CEU that blinks an LED every 500ms in the background
-          and awaits a button click or 1 hour to terminate.},
+          and awaits either a button click or 1 hour to terminate.},
   label={lst.ceu},
 ]
 input  void BUTTON;
@@ -392,9 +392,9 @@ of discrete reactions to external events with the characteristics that follow:
 lines of execution, known as \emph{trails}, and instantaneous broadcast
 communication through events.
 %
-Computations within a reaction (such as expressions, assignments, and system
-calls) are also instantaneous considering the synchronous
-hypothesis~\cite{rp.hypothesis}.
+%Computations within a reaction (such as expressions, assignments, and system
+%calls) are also instantaneous considering the synchronous
+%hypothesis~\cite{rp.hypothesis}.
 %
 %\CEU provides an \code{await} statement which is the only that actually
 %``consumes'' time.
@@ -402,25 +402,26 @@ hypothesis~\cite{rp.hypothesis}.
 \CEU provides an \code{await} statement that blocks the current running trail
 allowing the program to execute its other trails; when all trails are blocked,
 the reaction terminates and control returns to the environment to process
-upcoming events (e.g., mouse clicks and timers).
-
-Listing~\ref{lst.syntax} shows a compact reference of \CEU and
-Listing~\ref{lst.ceu} shows a simple example that blinks an LED and terminates
-either on a button press or after 1 hour of execution.
+upcoming events.
 %
-The example declares two external events (ln~1--2): an input that represents
+Listing~\ref{lst.syntax} shows a compact reference of \CEU.
+
+Listing~\ref{lst.ceu} shows a simple example in the context of embedded systems
+that blinks an LED and terminates either on a button press or after 1 hour of
+execution.
+%
+The example declares two external events (ln 1--2): an input that represents
 a button and an output that represents an LED.
 %
-The blink behavior uses a \code{code} abstraction (ln~4--11) which is similar
-to a coroutine or fiber~\cite{sync_async.cooperative}, but which can also
-interact directly with the environment through \code{await} statements
-(ln.~7,9).
+The blink behavior uses a \code{code} abstraction (ln 4--11) which is similar
+to a coroutine or fiber~\cite{sync_async.cooperative}, but which can interact
+directly with the environment through \code{await} statements (ln 7,9).
 %
-The \code{spawn} statement (ln~13) instantiates a \code{Blink} abstraction to
+The \code{spawn} statement (ln 13) instantiates a \code{Blink} abstraction to
 execute in the background and the program then creates two trails to await
-two events at the same time (ln~14--18).
+two events at the same time (ln 14--18).
 Since the composition is a \code{par/or}, it will terminate when either of the
-two events occur proceeding to the end of the file and consequently also
+two events occur, proceeding to the end of the file and consequently also
 terminating the program.
 
 In \CEU, every execution path within loops must contain at least one
@@ -480,9 +481,9 @@ However, about half of the game logic relates to non-reactive code, such as
 dealing with configurations and options, saved games and serialization, maps
 and level descriptions, string formatting, collision detection, graph
 algorithms, etc.
-This part remains unchanged and relies on the seamless integration between \CEU
-and C/C++~\cite{ceu.sensys13}: the type systems are equivalent and the
-integration happens at the source code level.
+This part remained unchanged in our rewrite and relies on the seamless
+integration between \CEU and C/C++~\cite{ceu.sensys13}: the type systems are
+compatible and the integration happens at the source code level.
 This enables accessing data and calling C/C++ from \CEU and vice-versa.
 %
 Therefore, we only rewrote 9.186 \locs spread across 126 files%
@@ -530,7 +531,7 @@ statuses, and counters (e.g.,
 \code{mode}, and
 \code{delay\_count}).
 Good chances are that such variables encode some form of control-flow
-progression that cross multiple callback invocations.
+progression that crosses multiple callback invocations.
 %
 Not all state follows these conventions, but they helped finding classes that
 are heavy on control flow quickly at the beginning of the process.
@@ -652,7 +653,7 @@ represent the callbacks manipulating it.
 %
 Note in Listing~\ref{lst.armageddon.a} how the accesses to the state variables
 are spread across the entire class: the distance between the initialization of
-\code{pressed} (ln  3) and the last access to it (ln 32) is over 40 lines in
+\code{pressed} (ln 3) and the last access to it (ln 32) is over 40 lines in
 the original file.
 Arguably, this dispersion of code across methods makes the understanding and 
 maintenance of the double-click behavior more difficult.
@@ -1014,7 +1015,7 @@ ln 5,9 in Listing~\ref{lst.armageddon.b}).
     The completion of a long-lasting activity in the game may carry a
     continuation, i.e., some action to execute next.
 
-\subsubsection{ Transition from \emph{Story}  to \emph{Credits} and \emph{Worldmap} Screen}
+\subsubsection{ Transition from \emph{Story}  to \emph{Credits} to \emph{Worldmap} Screen}
 
 The campaign world map has clickable blue dots in the two extremes of the
 map road to show introductory and closing ambience stories, respectively.
@@ -1189,8 +1190,8 @@ continuation-passing style of C++:
       self-contained block of code. % TODO: esta no outro exemplo
 \end{itemize}
 
-Continuation passing typically controls the overall structure of games in, such
-as screen transitions in menus and level progressions.
+Continuation passing typically controls the overall structure of games such as
+screen transitions in menus and level progressions.
 %
 In Pingus, \CEU adopts the direct style technique in five cases involving
 screen transitions:
@@ -1200,6 +1201,14 @@ the gameplay loop.
 It also uses the same technique for the loop that switches between pingu
 actions during gameplay (e.g., \emph{walking} to \emph{falling} and back to
 \emph{walking}).
+
+\begin{figure*}
+\centering
+\includegraphics[width=\textwidth]{hierarchy}
+\caption{Dispatching chain for \code{update}.
+\label{fig.hier}
+}
+\end{figure*}
 
 \subsection{Dispatching Hierarchies}
 \label{sec.pats.dispatching}
@@ -1250,7 +1259,7 @@ chain of 7 method dispatches (Figure~\ref{fig.hier}):
 %
 \begin{enumerate}
 %\setlength\itemsep{0em}
-\item \code{ScreenManager::display} in the main game loop calls\\
+\item \code{ScreenManager::display} in the main game loop calls
       \code{ScreenManager::update} when starting a new frame.
 \item \code{ScreenManager::update} calls \code{screen->update} for the active
       game screen (i.e., a \code{GameSession} instance, considering the screen
@@ -1267,7 +1276,7 @@ chain of 7 method dispatches (Figure~\ref{fig.hier}):
 \end{enumerate}
 %
 Each dispatching step in the chain is indeed necessary considering the typical
-OO game architecture:
+OO game architecture employed in Pingus:
 %
 \begin{itemize}
 %\setlength\itemsep{0em}
@@ -1302,18 +1311,10 @@ code Bomber (void) -> ActionName do
 end
 \end{lstlisting}
 
-\begin{figure*}
-\centering
-\includegraphics[width=\textwidth]{hierarchy}
-\caption{Dispatching chain for \code{update}.
-\label{fig.hier}
-}
-\end{figure*}
-
 In \CEU, the \code{Bomber} abstraction presented in Listing~\ref{lst.hier.b}
 spawns a \code{Sprite} animation instance on its body (ln 3).
 %
-However, in \CEU, the \code{Sprite} abstraction can react directly to external
+However, the \code{Sprite} abstraction in \CEU can react directly to external
 \code{update} and \code{draw} events, bypassing the program hierarchy entirely.
 Events in \CEU are broadcasted to the entire application in lexical order,
 i.e., an abstraction that appears first in the source code (e.g., ln 3) reacts
@@ -1322,7 +1323,8 @@ before another one that appears second (e.g., hidden in ln 4).
 This rule preserves determinism and also conforms to the program static
 hierarchy.
 While (\emph{and only while}) the bomber abstraction is alive, the sprite
-animation remains alive and reacts to the \code{update} and \code{draw} events.
+animation remains alive and reacts to the \code{update} and \code{draw} events
+(see also Section~\ref{sec.pats.lifespan} on Lifespan Hierarchies).
 The radical decoupling between the program hierarchy and reactions to events
 eliminates dispatching chains entirely.
 % TODO: hidden in the language runtime
@@ -1355,6 +1357,32 @@ games also rely heavily on this control-flow pattern.
 In the case of the Pingus engine, we rewrote 9 of its files with a reduction
 from 515 to 173 \locs, mostly due to dispatching code removal (not listed in
 Figure~\ref{tab.tree}, since it's engine code).
+
+\begin{lstlisting}[
+  numbers=left,xleftmargin=0.5cm,
+  float=t,
+  caption={C++: Managing the pingus lifecycle.},
+  label={lst.pingus.a},
+]
+Pingu* PinguHolder::create_pingu (<...>) {
+    <...>
+    Pingu* pingu = new Pingu (<...>);
+    pingus.push_back(pingu);
+    <...>
+}
+
+void PinguHolder::update() {
+    <...>
+    while(pingu != pingus.end()) {
+        (*pingu)->update();
+        if ((*pingu)->status() == DEAD) {
+            pingu = pingus.remove(pingu);
+        }
+        <...>
+        ++pingu;
+    }
+}
+\end{lstlisting}
 
 \subsection{Lifespan Hierarchies}
 \label{sec.pats.lifespan}
@@ -1484,32 +1512,6 @@ conditions, such as falling from a high altitude.%
 \begin{lstlisting}[
   numbers=left,xleftmargin=0.5cm,
   float=t,
-  caption={C++: Managing the pingus lifecycle.},
-  label={lst.pingus.a},
-]
-Pingu* PinguHolder::create_pingu (<...>) {
-    <...>
-    Pingu* pingu = new Pingu (<...>);
-    pingus.push_back(pingu);
-    <...>
-}
-
-void PinguHolder::update() {
-    <...>
-    while(pingu != pingus.end()) {
-        (*pingu)->update();
-        if ((*pingu)->status() == DEAD) {
-            pingu = pingus.remove(pingu);
-        }
-        <...>
-        ++pingu;
-    }
-}
-\end{lstlisting}
-
-\begin{lstlisting}[
-  numbers=left,xleftmargin=0.5cm,
-  float=t,
   caption={\CEU: Managing the pingus lifecycle.},
   label={lst.pingus.b},
 ]
@@ -1574,28 +1576,30 @@ The game screen in Listing~\ref{lst.pingus.b} spawns a new \code{Pingu} on every
 invocation of \code{Pingu\_Spawn} (ln 4--7).
 %
 The \code{spawn} statement (ln 6) specifies the pool declared at the top-level
-block of the game screen (ln 3).
-In this case, the lifespan of the new instances follows the scope of the pool
-(ln 1--9) instead of the enclosing scope of the \code{spawn} statement
-(ln 4--7), surviving the call to \code{Pingu\_Spawn}.
+block of the game screen (ln 3), attaching the scope of the pingu to that
+block.
+%In this case, the lifespan of the new instances follows the scope of the pool
+%(ln 1--9) instead of the enclosing scope of the \code{spawn} statement
+%(ln 4--7), surviving the call to \code{Pingu\_Spawn}.
 Since pools are also subject to lexical scope, the lifespan of all dynamically
-allocated pingus is constrained to the game screen.
+allocated pingus is constrained to the game screen (Figure~\ref{fig.pool}).
 %
 Lexical scopes handle memory and event dispatching automatically for static
-instances and also for pools.
+instances (Listing~\ref{lst.hier.b}, ln 3) and also for pools.
 However, the lifespan of a dynamic instance does not necessarily have to match
-the lifespan of its associated pool (Figure~\ref{fig.pool}).
+the lifespan of its associated pool.
 In \CEU, when the execution block of a dynamic instance terminates, which
 characterizes its \emph{natural termination}, the instance is automatically
-removed from its pool.
+removed from its pool ( Figure~\ref{fig.pool}, instances 1 and 3).
 Therefore, dynamic instances do not require any extra bookkeeping related to 
 containers or explicit deallocation.
 %
 To remove a pingu from the game in \CEU, we just need to terminate its execution
 block according to the appropriate conditions:
 %
-The \code{escape} statement (ln 17) aborts the execution block of the
-\code{Pingu} instance, removing it from its associated pool automatically.
+The \code{escape} statement (Listing~\ref{lst.pingus.b}, ln 17) aborts the
+execution block of the \code{Pingu} instance, removing it from its associated
+pool automatically.
 Hence, a dynamic instance that terminates naturally leaves no traces in the 
 program.
 
