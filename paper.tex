@@ -70,9 +70,11 @@
 \title{Structured Synchronous Reactive Programming for Game Development
         \\ \Large{Case Study: On Rewriting Pingus from C++ to \CEU}}
 
-%\author{Francisco Sant'Anna
-        %\\ Rio de Janeiro State University, Brazil
-        %\\ francisco@ime.uerj.br}
+\author{Francisco Sant'Anna
+        \\ Department of Computer Science
+        \\ Rio de Janeiro State University (UERJ)
+        \\ Rio de Janeiro, Brazil
+        \\ francisco@ime.uerj.br}
 
 \begin{comment}
 - fraquezas
@@ -183,14 +185,6 @@ Synchronous Reactive Programming ;
 
 \section{Introduction}
 
-\begin{figure}
-\centering
-\includegraphics[width=\columnwidth]{pingus-annotations}
-\caption{Pingus gameplay.
-\label{fig.pingus}
-}
-\end{figure}
-
 Pingus is an open-source puzzle-platform video game based on Lemmings.
 The objective of the game is to guide a group of penguins through a number of
 obstacles towards a designated exit (Figure~\ref{fig.pingus}).
@@ -202,6 +196,14 @@ The codebase%
 \footnote{Official Pingus repository: \url{github.com/Pingus/pingus/}}
 is about 40.000 lines of code (\locs), divided into
 the engine, level editor, auxiliary libraries, and the game logic itself.
+
+\begin{figure}
+\centering
+\includegraphics[width=\columnwidth]{pingus-annotations}
+\caption{Pingus gameplay.
+\label{fig.pingus}
+}
+\end{figure}
 
 According to Tim Sweeney (of Unreal Engine fame), about half the complexity in
 game development resides in \emph{simulation} (aka \emph{game logic}), but
@@ -437,9 +439,6 @@ On the other hand, all reactions to the external environment are guaranteed to
 be computed in bounded time~\cite{ceu.lctes18}, ensuring that games progress
 with time.
 
-\section{The Pingus Codebase and Rewriting Process}
-\label{sec.codebase}
-
 % cd /opt/pingus/src
 % sloccount .           -> 39975 -> (39362?)
 % cd pingus/
@@ -469,6 +468,9 @@ with time.
 \label{tab.tree}
 }
 \end{figure*}
+
+\section{The Pingus Codebase and Rewriting Process}
+\label{sec.codebase}
 
 In Pingus, the game logic accounts for almost half the size of the codebase%
 \footnote{
@@ -1190,6 +1192,14 @@ continuation-passing style of C++:
       self-contained block of code. % TODO: esta no outro exemplo
 \end{itemize}
 
+\begin{figure*}
+\centering
+\includegraphics[width=\textwidth]{hierarchy}
+\caption{Dispatching chain for \code{update}.
+\label{fig.hier}
+}
+\end{figure*}
+
 Continuation passing typically controls the overall structure of games such as
 screen transitions in menus and level progressions.
 %
@@ -1201,14 +1211,6 @@ the gameplay loop.
 It also uses the same technique for the loop that switches between pingu
 actions during gameplay (e.g., \emph{walking} to \emph{falling} and back to
 \emph{walking}).
-
-\begin{figure*}
-\centering
-\includegraphics[width=\textwidth]{hierarchy}
-\caption{Dispatching chain for \code{update}.
-\label{fig.hier}
-}
-\end{figure*}
 
 \subsection{Dispatching Hierarchies}
 \label{sec.pats.dispatching}
